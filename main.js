@@ -89,7 +89,7 @@ bot.command('notify')
             if([">", "<"].includes(comparator) && ["USD", "GBP", "EUR"].includes(currency)) {
                 let notification = [];
                 notification.comparator = comparator;
-                notification.rate     = parseFloat(rate);
+                notification.rate       = parseFloat(rate);
                 notification.currency   = currency;
                 notification.ctx        = ctx;
 
