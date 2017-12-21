@@ -1,5 +1,6 @@
 const bb = require('bot-brother');
 const axios = require('axios');
+const interval = require('interval-promise')
 
 // Create bot object
 bot = bb({
@@ -28,7 +29,9 @@ createCommandListeners();
 // Check notifications every 3 seconds
 // TODO: Change to greater interval, load notifications from file?
 notifications = [];
-setInterval(checkNotifications, 1000 * 3);
+interval(async () => {
+    await checkNotifications()
+}, 1000 * 3)
 
 
 /*
@@ -110,9 +113,7 @@ function createCommandListeners() {
                 if (args[0] == 'clear') {
                     notifications = [];
                 }
-            }
-            
-            else if(args.length == 2) {
+            } else if(args.length == 2) {
                 const comparator = args[0][0];
                 const rate = args[0].slice(1); // Slice removes < or > if there's any
                 const currency = args[1].toUpperCase();
@@ -145,7 +146,7 @@ function createCommandListeners() {
 */
 function checkNotifications() {
     if (notifications.length > 0) {
-        axios.get(apiUrl)
+        return axios.get(apiUrl)
         .then(function (response) {
     
             // Loop through each notification
@@ -176,6 +177,7 @@ function checkNotifications() {
             console.log(error);
         });
     }
+    Promise.resolve();
 }
 
 /*
@@ -185,7 +187,7 @@ function showNotification(notification, currentRate) {
     const overOrUnder = (notification.comparator === ">") ? "over" : "under";
 
     notification.ctx.sendMessage(
-        `*1 BTC* is now ${overOrUnder} * ${notification.rate} ${notification.currency}\n\n` + 
+        `*1 BTC* is now ${overOrUnder} * ${notification.rate} ${notification.currency}*\n\n` + 
         `*1 BTC:* ${currentRate} ${notification.currency}`,
         messageOptions
     );
