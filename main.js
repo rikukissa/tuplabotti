@@ -4,7 +4,7 @@ const interval = require('interval-promise')
 
 // Create bot object
 bot = bb({
-    key: '',
+    key: process.env.TOKEN,
     sessionManager: bb.sessionManager.memory(),
     polling: { interval: 0, timeout: 1 }
 });
