@@ -1,6 +1,6 @@
 const bb = require('bot-brother');
 let bot = bb({
-    key: "498054490:AAHNjaL9CH1Bl0u7P_TkHZQqCPI8aPo3KeY", // key: process.env.TOKEN,
+    key: process.env.TOKEN,
     sessionManager: bb.sessionManager.memory(),
     polling: { interval: 0, timeout: 1 }
 });
