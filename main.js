@@ -3,7 +3,7 @@ const axios = require('axios');
 
 // Create bot oject
 bot = bb({
-    key: '498054490:AAHNjaL9CH1Bl0u7P_TkHZQqCPI8aPo3KeY',
+    key: Process.env.key,
     sessionManager: bb.sessionManager.memory(),
     polling: { interval: 0, timeout: 1 }
 });
@@ -106,33 +106,12 @@ function createCommandListeners() {
         .then(function (response) {
             const args = ctx.command.args;
     
-            function showHelp() {
-                ctx.sendMessage(getHelpText("notify"), messageOptions);
-            }
-<<<<<<< HEAD
-    
             if (args.length == 1) {
                 if (args[0] == 'clear') {
                     notifications = [];
                 }
-=======
-        }
-        else if(args.length == 2) {
-            const comparator = args[0][0];
-            const rate = args[0].slice(1); // Slice removes < or > if there's any
-            const currency = args[1].toUpperCase();
-
-            // Add new notification if values are valid
-            if([">", "<"].includes(comparator) && ["USD", "GBP", "EUR"].includes(currency)) {
-                let notification = [];
-                notification.comparator = comparator;
-                notification.rate       = parseFloat(rate);
-                notification.currency   = currency;
-                notification.ctx        = ctx;
-
-                notifications.push(notification);
->>>>>>> e5c98658aaa5aab32d268ac35698faf375e864a8
             }
+            
             else if(args.length == 2) {
                 const comparator = args[0][0];
                 const rate = args[0].slice(1); // Slice removes < or > if there's any
@@ -235,40 +214,3 @@ function getNotifications() {
 
     return currentlyNotifying;
 }
-<<<<<<< HEAD
-=======
-
-function checkNotifications() {
-    axios.get('https://api.coindesk.com/v1/bpi/currentprice.json')
-    .then(function (response) {
-        notifications.forEach((notification, index, object) => {
-            const currentRate = response.data.bpi[notification.currency].rate_float.toFixed(2);
-            let showNotification = function() {
-                let overOrUnder = (notification.comparator == ">") ? "over" : "under";
-
-                notification.ctx.sendMessage(
-                    "*1 BTC* is now " + overOrUnder + " *" + notification.rate + " " + notification.currency + "*\n\n" +
-                    "*1 BTC:* " + currentRate + " " + notification.currency,
-    
-                    messageOptions
-                );
-    
-                // Remove from notifications
-                object.splice(index, 1);
-            };
-            
-            // Check if current rate is over / under the notification rate
-            if (notification.comparator === ">")
-                if (notification.rate < currentRate)
-                    showNotification();
-            
-            else if (notification.comparator === "<")
-                if (notification.rate > currentRate)
-                    showNotification();
-        });
-    });
-}
-
-//setInterval(checkNotifications, 1000 * 60 * 5); // Once every 5 minutes
-setInterval(checkNotifications, 1000 * 3); // Once every 5 minutes
->>>>>>> e5c98658aaa5aab32d268ac35698faf375e864a8
