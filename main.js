@@ -1,91 +1,216 @@
-String.prototype.addSpaces = function (length) {
-    if(this.length < length) {
-        return ' '.repeat(length - this.length) + this;
+const bb = require('bot-brother');
+const axios = require('axios');
+
+// Create bot oject
+bot = bb({
+    key: Process.env.key,
+    sessionManager: bb.sessionManager.memory(),
+    polling: { interval: 0, timeout: 1 }
+});
+
+// List of supported currencies throughout the app
+supportedCurrencies = ['USD', 'EUR', 'GBP'];
+supportedCryptos = ['BTC', 'ETH', 'BCH'];
+supportedAll = supportedCurrencies.concat(supportedCryptos);
+
+// Build API url
+apiUrl =    'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + 
+            supportedAll.join(',') +
+            '&tsyms=' +
+            supportedAll.join(',');
+
+// Default message options
+messageOptions = {parse_mode: 'Markdown', disable_notification: true, reply_markup: {}};
+
+// Create listeners for all commands
+createCommandListeners();
+
+// Check notifications every 3 seconds
+// TODO: Change to greater interval, load notifications from file?
+notifications = [];
+setInterval(checkNotifications, 1000 * 3);
+
+
+/*
+* Returns help text
+**/
+function getHelpText(command) {
+    if (command === "notify") {
+        return  '*Usage:* /notify <comparator><amount> <currency>\n' +
+                '*Example:* /notify >150 eur\n\n' + 
+                '*Currently notifying when:*\n' + 
+                getNotifications();
     }
-    return this;
-};
+}
 
-const axios = require('axios'); // networking
-const bb = require('bot-brother'); // telegram bot
+/*
+* Creates listeners for commands
+* Available commands: btc, notify
+**/
+function createCommandListeners() {
 
-let bot = bb({
-  key: '479950408:AAEAnfw7wEkKmQRCCAEWWYdG4qLaGJPMNxo',
-  sessionManager: bb.sessionManager.memory(),
-  polling: { interval: 0, timeout: 1 }
-});
-
-// BTC
-bot.command('btc')
-.invoke(function (ctx) {
-    axios.get('https://api.coindesk.com/v1/bpi/currentprice.json')
-    .then(function (response) {
-        const args = ctx.command.args;
-
-        // Default values
-        let value = 1;
-        let currency = 'BTC';
-
-        if(args[0]) {
-            const parsedValue = args[0];
-            if(parsedValue >= 0 && parsedValue <= 100000000) {
-                value = parsedValue;
+    // BTC
+    bot.command('btc')
+    .invoke(function (ctx) {
+        axios.get(apiUrl)
+        .then(function (response) {
+            const args = ctx.command.args;
+    
+            let value = 1; // defaults
+            let currency = 'BTC';
+    
+            if(args[0]) {
+                const parsedValue = args[0];
+                if(parsedValue >= 0 && parsedValue <= 100000000) {
+                    value = parsedValue;
+                }
             }
-        }
-        if(args[1]) {
-            const parsedCurrency = args[1].toUpperCase();
-            if(['EUR', 'USD', 'GBP', 'BTC'].includes(parsedCurrency)) {
-                currency = parsedCurrency;
+            
+            if(args[1]) {
+                const parsedCurrency = args[1].toUpperCase();
+                if(supportedCurrencies.includes(parsedCurrency)) {
+                    currency = parsedCurrency;
+                }
             }
-        }
-
-        // X to BTC
-        if(['EUR', 'USD', 'GBP'].includes(currency)) {
-            const truevalue = (value / response.data.bpi[currency].rate_float).toFixed(8);
-
+    
+            // X to BTC
+            if(supportedCurrencies.includes(currency)) {
+                console.log(currency);
+                const truevalue = (value / response.data['BTC'][currency]).toFixed(8);
+    
+                return ctx.sendMessage(
+                    `*${value} ${currency}* to *BTC*: ${truevalue}`,
+                    messageOptions
+                );
+            }
+    
+            // BTC to X
+            const finalusd = (value * response.data['BTC']['USD']).toFixed(2);
+            const finaleur = (value * response.data['BTC']['EUR']).toFixed(2);
+    
             return ctx.sendMessage(
-                '*' + value + ' ' + currency + '* to *BTC*: `' + truevalue + '`',
-                {parse_mode: 'Markdown', disable_notification: true, reply_markup: {}}
+                `*${value} BTC* to *USD*: ${finalusd}\n` +
+                `*${value} BTC* to *EUR*: ${finaleur}\n`,
+                messageOptions
             );
-        }
-
-        // BTC to X
-        const finalusd = (value * response.data.bpi['USD'].rate_float).toFixed(2);
-        const finaleur = (value * response.data.bpi['EUR'].rate_float).toFixed(2);
-
-        return ctx.sendMessage(
-            '*' + value + ' BTC* to *USD*: `' + finalusd + '`\n' +
-            '*' + value + ' BTC* to *EUR*: `' + finaleur + '`', 
-            {parse_mode: 'Markdown', disable_notification: true, reply_markup: {}}
-        );
-    })
-    .catch(function (error) {
-        console.log(error);
-    });
-});
-
-bot.command('crypto')
-.invoke(function (ctx) {
-    axios.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH,BCH&tsyms=USD,EUR')
-    .then(function (response) {
-        const data = response.data;
-        let result = '';
-
-        for (let p in data) {
-            if(data.hasOwnProperty(p)) {
-                const usd = (data[p].USD + '').addSpaces(9);
-                const eur = (data[p].EUR + '').addSpaces(9);
-                p = p.addSpaces(4);
-
-                result += '`' + p + '` `' + usd + ' USD` `' + eur + ' EUR`\n';
-            } 
-        }
-        return ctx.sendMessage(result, {
-            parse_mode: 'Markdown',
-            disable_notification: true,
-            reply_markup: { }
+        })
+        .catch(function (error) {
+            console.log(error);
         });
-    })
-    .catch(function (error) {
-        console.log(error);
     });
-});
+
+    // Notify
+    bot.command('notify')
+    .invoke(function (ctx) {
+        axios.get(apiUrl)
+        .then(function (response) {
+            const args = ctx.command.args;
+    
+            if (args.length == 1) {
+                if (args[0] == 'clear') {
+                    notifications = [];
+                }
+            }
+            
+            else if(args.length == 2) {
+                const comparator = args[0][0];
+                const rate = args[0].slice(1); // Slice removes < or > if there's any
+                const currency = args[1].toUpperCase();
+    
+                // Add new notification if values are valid
+                if(['>', '<'].includes(comparator) && supportedCurrencies.includes(currency)) {
+                    let notification = [];
+                    notification.comparator = comparator;
+                    notification.rate     = parseFloat(rate);
+                    notification.currency   = currency;
+                    notification.ctx        = ctx;
+    
+                    notifications.push(notification);
+                }
+    
+                ctx.sendMessage('*Currently notifying when:*\n' + 
+                                getNotifications(), messageOptions);
+            } else {
+                ctx.sendMessage(getHelpText("notify"), messageOptions);
+            }
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+    });
+}
+
+/*
+* Check notifications
+*/
+function checkNotifications() {
+    if (notifications.length > 0) {
+        axios.get(apiUrl)
+        .then(function (response) {
+    
+            // Loop through each notification
+            notifications.forEach((notification, index, object) => {
+
+                // Get current rate of crypto
+                const currentRate = response.data["BTC"][notification.currency].toFixed(2);
+                
+                // Check if current rate is over / under the notification rate
+                if (notification.comparator === '>') {
+                    if (notification.rate < currentRate) {
+                        // Show notification and remove it
+                        showNotification(notification, currentRate);
+                        object.splice(index, 1);
+                    }
+                }
+                
+                else if (notification.comparator === '<') {
+                    if (notification.rate > currentRate) {
+                        // Show notification and remove it
+                        showNotification(notification, currentRate);
+                        object.splice(index, 1);
+                    }
+                }
+            });
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+    }
+}
+
+/*
+* Send notification message
+*/
+function showNotification(notification, currentRate) {
+    const overOrUnder = (notification.comparator === ">") ? "over" : "under";
+
+    notification.ctx.sendMessage(
+        `*1 BTC* is now ${overOrUnder} * ${notification.rate} ${notification.currency}\n\n` + 
+        `*1 BTC:* ${currentRate} ${notification.currency}`,
+        messageOptions
+    );
+}
+
+/*
+* Returns a string containing all current notifications
+*/
+function getNotifications() {
+    let currentlyNotifying;
+    
+    if (notifications.length > 0) {
+        currentlyNotifying = '';
+
+        notifications.forEach(notification => {
+            currentlyNotifying +=   notification.comparator +
+                                    notification.rate + ' ' +
+                                    notification.currency + '\n';
+        });
+
+        // Remove trailing \n
+        currentlyNotifying.slice(0, -1); 
+    } else {
+        currentlyNotifying = 'Never';
+    }
+
+    return currentlyNotifying;
+}
