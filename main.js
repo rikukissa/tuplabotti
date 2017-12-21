@@ -1,11 +1,18 @@
-const bb = require('bot-brother');
+String.prototype.addSpaces = function (length) {
+    if(this.length < length) {
+        return ' '.repeat(length - this.length) + this;
+    }
+    return this;
+};
+
+const axios = require('axios'); // networking
+const bb = require('bot-brother'); // telegram bot
+
 let bot = bb({
-  key: process.env.TOKEN,
+  key: '479950408:AAEAnfw7wEkKmQRCCAEWWYdG4qLaGJPMNxo',
   sessionManager: bb.sessionManager.memory(),
   polling: { interval: 0, timeout: 1 }
 });
-
-const axios = require('axios');
 
 // BTC
 bot.command('btc')
@@ -14,7 +21,8 @@ bot.command('btc')
     .then(function (response) {
         const args = ctx.command.args;
 
-        let value = 1; // defaults
+        // Default values
+        let value = 1;
         let currency = 'BTC';
 
         if(args[0]) {
@@ -55,4 +63,29 @@ bot.command('btc')
     });
 });
 
-// Testings!!
+bot.command('crypto')
+.invoke(function (ctx) {
+    axios.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH,BCH&tsyms=USD,EUR')
+    .then(function (response) {
+        const data = response.data;
+        let result = '';
+
+        for (let p in data) {
+            if(data.hasOwnProperty(p)) {
+                const usd = (data[p].USD + '').addSpaces(9);
+                const eur = (data[p].EUR + '').addSpaces(9);
+                p = p.addSpaces(4);
+
+                result += '`' + p + '` `' + usd + ' USD` `' + eur + ' EUR`\n';
+            } 
+        }
+        return ctx.sendMessage(result, {
+            parse_mode: 'Markdown',
+            disable_notification: true,
+            reply_markup: { }
+        });
+    })
+    .catch(function (error) {
+        console.log(error);
+    });
+});
