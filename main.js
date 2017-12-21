@@ -3,7 +3,7 @@ const axios = require('axios');
 
 // Create bot oject
 bot = bb({
-    key: Process.env.key,
+    key: '479950408:AAEAnfw7wEkKmQRCCAEWWYdG4qLaGJPMNxo',
     sessionManager: bb.sessionManager.memory(),
     polling: { interval: 0, timeout: 1 }
 });
