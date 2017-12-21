@@ -1,7 +1,7 @@
 const bb = require('bot-brother');
 const axios = require('axios');
 
-// Create bot oject
+// Create bot object
 bot = bb({
     key: '479950408:AAEAnfw7wEkKmQRCCAEWWYdG4qLaGJPMNxo',
     sessionManager: bb.sessionManager.memory(),
@@ -201,9 +201,7 @@ function getNotifications() {
         currentlyNotifying = '';
 
         notifications.forEach(notification => {
-            currentlyNotifying +=   notification.comparator +
-                                    notification.rate + ' ' +
-                                    notification.currency + '\n';
+            currentlyNotifying += `${notification.comparator + notification.rate} ${notification.currency}\n`;
         });
 
         // Remove trailing \n
