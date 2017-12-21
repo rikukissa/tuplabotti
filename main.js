@@ -55,4 +55,4 @@ bot.command('btc')
     });
 });
 
-// Testaan gittiisss
+// Testings!
