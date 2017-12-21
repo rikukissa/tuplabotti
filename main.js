@@ -177,7 +177,7 @@ function checkNotifications() {
             console.log(error);
         });
     }
-    Promise.resolve();
+    return Promise.resolve();
 }
 
 /*
