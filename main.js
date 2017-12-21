@@ -55,4 +55,4 @@ bot.command('btc')
     });
 });
 
-// Testings!!
+// Testings!
