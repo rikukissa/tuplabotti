@@ -6,4 +6,4 @@ Simple Telegram bot
 
 * Fetching the current Bitcoin conversion rates
 * Calculating BTC => (USD, EUR, GBP)
-* Notify when BTC is over set rate
+* Notify when BTC is over / under set rate
