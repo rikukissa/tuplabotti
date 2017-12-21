@@ -54,3 +54,5 @@ bot.command('btc')
         console.log(error);
     });
 });
+
+// Testings!
