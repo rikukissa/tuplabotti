@@ -1,11 +1,11 @@
-import * as bb from 'bot-brother';
-import axios from 'axios';
-
+const bb = require('bot-brother');
 let bot = bb({
   key: process.env.TOKEN,
   sessionManager: bb.sessionManager.memory(),
   polling: { interval: 0, timeout: 1 }
 });
+
+const axios = require('axios');
 
 // BTC
 bot.command('btc')
