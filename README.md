@@ -8,6 +8,8 @@ Simple Telegram bot
 * Calculating (BTC, BCH, ETH) => (USD, EUR, GBP)
 * Notify when cryptocurrency's rate is over / under set value
 
+Type /help for list of commands
+
 ## Prerequisites
 
 * Node.js
